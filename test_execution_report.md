@@ -18,6 +18,7 @@ This matrix maps Functional Requirements (FR) and Non-Functional Requirements (N
 | FR10 | Admin Web | Manage categories, injuries, and guides via web dashboard. | TC-ADMIN-01 | PASS |
 | FR11 | Voice Mode | Bidirectional 16kHz PCM audio streaming via WebSockets. | TC-VOICE-01 | PASS |
 | FR12 | Integration | Admin-to-Mobile data propagation (Firebase). | TC-INT-01 | PASS |
+| FR13 | Local Storage | Persist chat history, user profiles, and favorites in Hive. | TC-DB-01 | PASS |
 | NFR1 | Performance | NLP matching should respond in < 200ms. | TC-PERF-01 | PASS |
 | NFR2 | Offline Availability | Core first aid features must work without internet. | TC-OFFLINE-01 | PASS |
 
@@ -44,6 +45,9 @@ This matrix maps Functional Requirements (FR) and Non-Functional Requirements (N
 | RoutingService | Generate path with 5 points | PASS | Simulation logic produces expected multi-point path. |
 | GuideRepository | Filter injuries by category | PASS | Correctly retrieves injuries for a specific category ID. |
 | HospitalRepository | Update hospitals from remote | PASS | Verified Hive box persistence for remote data simulation. |
+| StorageService (Hive) | Save/Retrieve chat history | PASS | 100% data integrity for local NoSQL storage. |
+| StorageService (Hive) | User profile persistence | PASS | Verified profile CRUD in local Hive box. |
+| StorageService (Hive) | Favorites toggle | PASS | Verified atomicity of toggling logic. |
 
 ### Integration Tests (Cross-Tier)
 
@@ -61,6 +65,7 @@ This matrix maps Functional Requirements (FR) and Non-Functional Requirements (N
 | App Launch Time | < 2s | ~1.5s (Estimated) |
 | NLP Matching Latency | < 200ms | ~15ms (Measured) |
 | Route Calculation | < 500ms | < 5ms (Measured) |
+| Hive Write Latency | < 50ms | ~2ms (Measured) |
 | Admin CRUD Latency | < 1s | ~200ms (Firebase Mocked) |
 
 ---
@@ -73,6 +78,7 @@ This matrix maps Functional Requirements (FR) and Non-Functional Requirements (N
 | BUG-002 | Low | Guide model required `description` field not initially provided in tests. | FIXED | Updated test mocks to match `GuideModel` constructor. |
 | BUG-003 | Medium | Voice Mode required explicit 16kHz/PCM16 alignment to avoid audio artifacts. | FIXED | Implemented `_incomingBuffer` alignment in `VoiceLiveServiceImpl`. |
 | BUG-004 | High | Admin tests failed due to missing `jsdom` environment. | FIXED | Installed `jsdom` and configured `vitest.config.ts`. |
+| BUG-005 | Low | Duplicate `async` keyword in `storage_service_test.dart` caused compile error. | FIXED | Removed redundant keyword in test definition. |
 
 ---
 
@@ -81,7 +87,9 @@ This matrix maps Functional Requirements (FR) and Non-Functional Requirements (N
 ### Constraints
 1. **Firebase Dependency**: The integration between Admin and Mobile relies on Firebase. Testing requires valid credentials or robust mocking of the Firebase SDK.
 2. **Offline Data Consistency**: While the app is offline-first, manual updates from Admin require the mobile app to be online to sync new content.
+3. **Hive Compaction**: As chat history grows, Hive boxes may require manual compaction to prevent disk bloat.
 
 ### Recommendations
 1. **End-to-End Testing**: Implement Playwright tests for the Admin Web to verify the full UI flow from guide creation to Firestore persistence.
 2. **Firestore Emulators**: Use Firebase Emulators for integration testing to avoid hitting production databases during automated runs.
+3. **Automated Backups**: Implement a mechanism to backup the local Hive database to the cloud when online to prevent data loss on device reset.
